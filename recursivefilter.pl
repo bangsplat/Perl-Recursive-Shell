@@ -8,6 +8,8 @@ use File::Find;
 #
 # recursivefilter.pl
 #
+# Version 1.1
+#
 # Shell project which recursively searches through a directory
 # Use for writing file filter scripts
 #
@@ -25,22 +27,34 @@ use File::Find;
 # --[no]delete | --[no]del
 # Delete source file after filtering
 # Negated by prepending "no" (i.e., --nodelete or --nodel)
+# Default is no delete
 #
 # --help | -?
 # Displays help message
 #
+# --[no]debug
+# Display debugging information
+# Default is no debug mode
+#
+# --[no]test
+# Test mode - display file names but do not process
+# Default is no test mode
+#
 # Other parameters may, of course, be added
 #
 
-my ( $param_directory, $param_recurse, $param_delete, $param_help );
+my ( $directory_param, $recurse_param, $delete_param, $help_param );
+my ( $debug_param, $test_param );
 
-GetOptions(	'directory|d=s'	=> \$param_directory,
-		'recurse|r!'	=> \$param_recurse,
-		'delete|del!'	=> \$param_delete,
-		'help|?'	=> \$param_help );
+GetOptions(	'directory|d=s'	=> \$directory_param,
+		'recurse|r!'	=> \$recurse_param,
+		'delete|del!'	=> \$delete_param,
+		'help|?'	=> \$help_param,
+		'debug!'	=> \$debug_param,
+		'test!'		=> \$test_param );
 
 # If user asked for help, display help message and exit
-if ( $param_help ) {
+if ( $help_param ) {
 	print "recursivefileter.pl\n";
 	print "\n";
 	print "Sample Perl script for recursive file filtering\n";
@@ -61,28 +75,60 @@ if ( $param_help ) {
 }
 
 # Set parameter defaults
-if ( $param_directory eq undef ) { $param_directory = cwd; }	# Current working directory
-if ( $param_recurse eq undef ) { $param_recurse = 1; }		# True
-if ( $param_delete eq undef ) { $param_delete = 0; }		# False
+if ( $directory_param eq undef ) { $directory_param = cwd; }	# Current working directory
+if ( $recurse_param eq undef ) { $recurse_param = 1; }		# True
+if ( $delete_param eq undef ) { $delete_param = 0; }		# False
+if ( $debug_param eq undef ) { $debug_param = 0; }		# False
+if ( $test_param eq undef ) { $test_param = 0; }		# False
 
-chdir( $param_directory );	# Change to the target directory
-find( \&encode, "." ); 		# Begin file filtering
+chdir( $directory_param );	# Change to the target directory
+find( \&doittoit, "." ); 		# Begin file filtering
 
-sub encode {
+sub doittoit {
 	# We have to check to see if each file is in the target directory of a subdirectory
 	# Of course, if recursion is on, process all of the files
 	# Test for any file attributes desired
-	if ( $param_recurse || $File::Find::dir eq "." ) {
-		my $full_path = $param_directory . "/" . $File::Find::name;	# Create full path
+	# Implement the filter function, too
+	if ( $recurse_param || $File::Find::dir eq "." ) {
+	
+		# Get some information about the item
+		#	Full path of item
+		#	Full path of parent directory
+		#	Branch (name of parent directory's parent directory - may be empty)
+		#	Twig (name of parent directory)
+		#	Leaf (name of file or directory)
+		my ( $full_path, $parent_dir, $leaf_name, $twig_name, $branch_name, $work_space );
+		
+		$full_path = $directory_param . "/" . $File::Find::name;	# Create full path
 		$full_path =~ s/\\/\//g;					# Turn around any backwards slashes
+		if ( -d ) { $full_path .= "/"; }				# Add slash to end of the path if it is a directory
 		$full_path =~ s/\/.\//\//;					# Remove extra "/./"
 		$full_path =~ s/\/\//\//g;					# Remove any duplicate slashes
-		if ( -d ) { $full_path .= "/"; }				# Add slash to directory names
+				
+		$parent_dir = $full_path;
+		$parent_dir =~ s/\/$//g;					# Strip any trailing slash
+		$parent_dir =~ s/\/([^\/]+)$//;					# Delete and remember anything after after the last non-empty slash
+		$leaf_name = $1;
 		
-		# Just for sake of example, print full path name
-		print "$full_path\n";
-		# Process the file as desired
+		$work_space = $parent_dir;
+		$work_space =~ s/\/([^\/]+)$//g;
+		$twig_name = $1;
+		$work_space =~ s/\/([^\/]+)$//g;
+		$branch_name = $1;
 		
-		if ( $param_delete ) { unlink( $full_path ); }
+		##### Do whatever file processing is to be done here
+				
+		## Example - report back file names
+		if ( $test_param ) {
+			print "Full Path: $full_path\n";
+			print "Parent Dir: $parent_dir\n";
+			print "Leaf Name: $leaf_name\n";
+			print "Twig Name: $twig_name\n";
+			print "Branch Name: $branch_name\n";
+			print "\n";
+		}
+		
+		## Example - if --delete is specified		
+		if ( $delete_param ) { unlink( $full_path ); }
 	}
 }
