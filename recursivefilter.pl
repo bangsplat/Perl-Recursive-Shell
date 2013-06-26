@@ -1,4 +1,4 @@
-#!perl
+#!/usr/bin/perl
 use strict;	# Enforce some good programming rules
 
 use Getopt::Long;
@@ -8,7 +8,21 @@ use File::Find;
 #
 # recursivefilter.pl
 #
-# Version 1.1
+# Version 1.2
+#
+# created 2006-04-10
+# modified 2012-06-26
+#
+# Version History
+#
+# Version 1.0 2006-04-10
+# Version 1.1 2007-05-19
+# 	Added --directory, --debug, and --test flags
+#	fixed --help function
+# Version 1.2 2013-06-26
+# 	Added --filter function
+#
+
 #
 # Shell project which recursively searches through a directory
 # Use for writing file filter scripts
@@ -43,15 +57,16 @@ use File::Find;
 # Other parameters may, of course, be added
 #
 
-my ( $directory_param, $recurse_param, $delete_param, $help_param );
+my ( $directory_param, $recurse_param, $delete_param, $filter_param, $help_param );
 my ( $debug_param, $test_param );
 
 GetOptions(	'directory|d=s'	=> \$directory_param,
-		'recurse|r!'	=> \$recurse_param,
-		'delete|del!'	=> \$delete_param,
-		'help|?'	=> \$help_param,
-		'debug!'	=> \$debug_param,
-		'test!'		=> \$test_param );
+			'recurse|r!'	=> \$recurse_param,
+			'delete|del!'	=> \$delete_param,
+			'filter|f=s'	=> \$filter_param,
+			'help|?'		=> \$help_param,
+			'debug!'		=> \$debug_param,
+			'test!'			=> \$test_param );
 
 # If user asked for help, display help message and exit
 if ( $help_param ) {
@@ -65,6 +80,9 @@ if ( $help_param ) {
 	print "--[no]recurse | -[no]r - recursive directory search\n";
 	print "search through subdirectories for WAV files to convert\n";
 	print "default is recursive search\n";
+	print "\n";
+	print "--filter | -f <regex> - specifies a filename filter for processing\n";
+	print "<regex> is a regular expression\n";
 	print "\n";
 	print "--[no]delete | --[no]del - delete source files after encoding\n";
 	print "default is not to delete source files after encoding\n";
@@ -87,9 +105,8 @@ find( \&doittoit, "." ); 		# Begin file filtering
 sub doittoit {
 	# We have to check to see if each file is in the target directory of a subdirectory
 	# Of course, if recursion is on, process all of the files
-	# Test for any file attributes desired
-	# Implement the filter function, too
-	if ( $recurse_param || $File::Find::dir eq "." ) {
+	if ( ( ( $recurse_param || $File::Find::dir eq "." ) && ( ! -d ) ) &&
+	( $filter_param eq undef || ( ( $filter_param ne undef ) && ( /$filter_param/ ) ) ) ) {
 	
 		# Get some information about the item
 		#	Full path of item
