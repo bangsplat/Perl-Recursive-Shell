@@ -8,10 +8,10 @@ use File::Find;
 #
 # recursivefilter.pl
 #
-# Version 1.2
+# Version 1.2a
 #
 # created 2006-04-10
-# modified 2012-06-26
+# modified 2012-06-29
 #
 # Version History
 #
@@ -118,13 +118,13 @@ sub doittoit {
 		
 		$full_path = $directory_param . "/" . $File::Find::name;	# Create full path
 		$full_path =~ s/\\/\//g;					# Turn around any backwards slashes
-		if ( -d ) { $full_path .= "/"; }				# Add slash to end of the path if it is a directory
-		$full_path =~ s/\/.\//\//;					# Remove extra "/./"
+		if ( -d ) { $full_path .= "/"; }			# Add slash to end of the path if it is a directory
+		$full_path =~ s/\/\.\//\//;					# Remove extra "/./"
 		$full_path =~ s/\/\//\//g;					# Remove any duplicate slashes
 				
 		$parent_dir = $full_path;
 		$parent_dir =~ s/\/$//g;					# Strip any trailing slash
-		$parent_dir =~ s/\/([^\/]+)$//;					# Delete and remember anything after after the last non-empty slash
+		$parent_dir =~ s/\/([^\/]+)$//;				# Delete and remember anything after after the last non-empty slash
 		$leaf_name = $1;
 		
 		$work_space = $parent_dir;
