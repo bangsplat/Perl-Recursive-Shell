@@ -11,7 +11,7 @@ use File::Find;
 # Version 1.2a
 #
 # created 2006-04-10
-# modified 2012-06-29
+# modified 2012-06-30
 #
 # Version History
 #
@@ -21,6 +21,8 @@ use File::Find;
 #	fixed --help function
 # Version 1.2 2013-06-26
 # 	Added --filter function
+# Version 1.2a 2013-06-30
+# 	clean-up comments
 #
 
 #
@@ -94,17 +96,23 @@ if ( $help_param ) {
 
 # Set parameter defaults
 if ( $directory_param eq undef ) { $directory_param = cwd; }	# Current working directory
-if ( $recurse_param eq undef ) { $recurse_param = 1; }		# True
-if ( $delete_param eq undef ) { $delete_param = 0; }		# False
-if ( $debug_param eq undef ) { $debug_param = 0; }		# False
-if ( $test_param eq undef ) { $test_param = 0; }		# False
+if ( $recurse_param eq undef ) { $recurse_param = 1; }			# True
+if ( $delete_param eq undef ) { $delete_param = 0; }			# False
+if ( $debug_param eq undef ) { $debug_param = 0; }				# False
+if ( $test_param eq undef ) { $test_param = 0; }				# False
 
-chdir( $directory_param );	# Change to the target directory
+chdir( $directory_param );		# Change to the target directory
 find( \&doittoit, "." ); 		# Begin file filtering
+# find() is part of File::Find - it searches through a directory and its sub-directories
+# starting with the directory specified in the second parameter
+# "." is the current directory
+# for each item, the subroutine referenced by the first parameter is called
 
 sub doittoit {
-	# We have to check to see if each file is in the target directory of a subdirectory
-	# Of course, if recursion is on, process all of the files
+	# Check to see if we should process the file/directory or not
+	# If --recurse is not on, only process files from the starting directory
+	# Only process files ( ! -d ) - is not a directory
+	# If --filter is on, check to see if the file name matches the filter
 	if ( ( ( $recurse_param || $File::Find::dir eq "." ) && ( ! -d ) ) &&
 	( $filter_param eq undef || ( ( $filter_param ne undef ) && ( /$filter_param/ ) ) ) ) {
 	
@@ -135,7 +143,7 @@ sub doittoit {
 		
 		##### Do whatever file processing is to be done here
 				
-		## Example - report back file names
+		##### Example - report back file names
 		if ( $test_param ) {
 			print "Full Path: $full_path\n";
 			print "Parent Dir: $parent_dir\n";
@@ -145,7 +153,10 @@ sub doittoit {
 			print "\n";
 		}
 		
-		## Example - if --delete is specified		
-		if ( $delete_param ) { unlink( $full_path ); }
+		##### Example - if --delete is specified		
+#		if ( $delete_param ) { unlink( $full_path ); }
+		# BE CAREFUL - unlink() deletes a file immediately and you can't undo it
+		# if you uncomment this line and run with --delete, it will delete every file
+		# in the directory, and any sub-directories if --recurse is turned on
 	}
 }
